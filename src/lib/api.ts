@@ -70,12 +70,14 @@ export interface CampaignOverride {
   campaign_id: string;
   banner_image_url: string | null;
   logo_url: string | null;
+  custom_links: string[] | null;
   updated_at?: string;
 }
 
 export type EnrichedCampaign = Campaign & {
   banner_image_url: string | null;
   logo_url: string | null;
+  custom_links: string[] | null;
 };
 
 /** Merge MM campaign data with local BluStu overrides. */
@@ -84,7 +86,7 @@ export function enrichCampaigns(campaigns: Campaign[], overrides: CampaignOverri
   overrides.forEach((o) => map.set(o.campaign_id, o));
   return campaigns.map((c) => {
     const o = map.get(c.id);
-    return { ...c, banner_image_url: o?.banner_image_url || null, logo_url: o?.logo_url || null };
+    return { ...c, banner_image_url: o?.banner_image_url || null, logo_url: o?.logo_url || null, custom_links: o?.custom_links || null };
   });
 }
 

@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { getCampaigns, enrichCampaigns, type EnrichedCampaign, type CampaignOverride } from "@/lib/api";
 import { syncUserSubmissions, type LocalSubmission } from "@/lib/sync";
-import { platformIcon, platformColor, relativeTime, statusStyle, cn, daysRemaining, extractThumbnail, compactNumber } from "@/lib/utils";
+import { relativeTime, statusStyle, cn, daysRemaining, extractThumbnail, compactNumber } from "@/lib/utils";
+import { PlatformIcon, platformColor } from "@/components/PlatformIcons";
 import { toast } from "sonner";
 
 type Tab = "overview" | "submissions" | "submit";
@@ -216,7 +217,7 @@ export default function CampaignDetailPage() {
               {campaign.allowed_platforms.map((p) => (
                 <span key={p} className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full"
                   style={{ background: `${platformColor(p)}15`, color: platformColor(p), border: `1px solid ${platformColor(p)}25` }}>
-                  {platformIcon(p)} {p}
+                  <PlatformIcon platform={p} className="w-3 h-3 inline-block" /> {p}
                 </span>
               ))}
               {days !== null && (
@@ -341,17 +342,20 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {campaign.links?.length > 0 && (
-            <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-5">
-              <h3 className="text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-3">Links</h3>
-              <div className="space-y-1.5">
-                {campaign.links.map((l, i) => (
-                  <a key={i} href={l} target="_blank" rel="noopener"
-                    className="block text-sm text-blu-400 hover:underline break-all">{l}</a>
-                ))}
+          {(() => {
+            const displayLinks = campaign.custom_links?.length ? campaign.custom_links : campaign.links;
+            return displayLinks?.length > 0 ? (
+              <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-5">
+                <h3 className="text-[11px] font-bold text-[#475569] uppercase tracking-wider mb-3">Links</h3>
+                <div className="space-y-1.5">
+                  {displayLinks.map((l, i) => (
+                    <a key={i} href={l} target="_blank" rel="noopener"
+                      className="block text-sm text-blu-400 hover:underline break-all">{l}</a>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            ) : null;
+          })()}
         </div>
       )}
 
@@ -369,8 +373,8 @@ export default function CampaignDetailPage() {
                 return (
                   <div key={s.id}
                     className="bg-[#111827] border border-[#1e293b] rounded-xl p-4 flex items-center gap-4 flex-wrap">
-                    <span className="text-xl w-8 text-center flex-shrink-0">
-                      {s.platform ? platformIcon(s.platform) : "\uD83D\uDCCE"}
+                    <span className="w-8 text-center flex-shrink-0 flex items-center justify-center">
+                      {s.platform ? <PlatformIcon platform={s.platform} className="w-5 h-5" /> : <span className="text-xl">📎</span>}
                     </span>
                     <div className="flex-1 min-w-[140px]">
                       <div className="text-sm font-semibold text-white mb-0.5">
@@ -446,7 +450,7 @@ export default function CampaignDetailPage() {
                           ) : (
                             <div className="w-full h-full min-h-[90px] flex items-center justify-center"
                               style={{ background: `linear-gradient(135deg, ${platformColor(s.platform || "")}20, ${platformColor(s.platform || "")}08)` }}>
-                              <span className="text-2xl opacity-60">{s.platform ? platformIcon(s.platform) : "\uD83C\uDFA5"}</span>
+                              {s.platform ? <PlatformIcon platform={s.platform} className="w-6 h-6 opacity-60" /> : <span className="text-2xl opacity-60">🎬</span>}
                             </div>
                           )}
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">

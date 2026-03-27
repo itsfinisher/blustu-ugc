@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS public.campaign_overrides (
   campaign_id TEXT PRIMARY KEY,
   banner_image_url TEXT,
   logo_url TEXT,
+  custom_links TEXT[],
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

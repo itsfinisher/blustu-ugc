@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { getCampaigns, type Campaign } from "@/lib/api";
 import { syncUserSubmissions, type LocalSubmission } from "@/lib/sync";
-import { platformIcon, cn, compactNumber } from "@/lib/utils";
+import { cn, compactNumber } from "@/lib/utils";
+import { PlatformIcon } from "@/components/PlatformIcons";
 
 interface CampaignEarnings {
   campaign: Campaign;
@@ -201,7 +202,7 @@ export default function EarningsPage() {
                     <div className="flex gap-1.5 mt-1">
                       {ce.campaign.allowed_platforms.map((p) => (
                         <span key={p} className="text-[10px] font-semibold text-[#475569]">
-                          {platformIcon(p)} {p}
+                          <PlatformIcon platform={p} className="w-3 h-3 inline-block" /> {p}
                         </span>
                       ))}
                     </div>

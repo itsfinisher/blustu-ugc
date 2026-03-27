@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 import { getCampaigns, type Campaign } from "@/lib/api";
 import { syncUserSubmissions, type LocalSubmission } from "@/lib/sync";
-import { relativeTime, platformIcon, platformColor, statusStyle, cn, extractThumbnail, compactNumber } from "@/lib/utils";
+import { relativeTime, statusStyle, cn, extractThumbnail, compactNumber } from "@/lib/utils";
+import { PlatformIcon, platformColor } from "@/components/PlatformIcons";
 import { toast } from "sonner";
 
 export default function SubmissionsPage() {
@@ -139,7 +140,7 @@ export default function SubmissionsPage() {
                     ) : (
                       <div className="w-full h-full min-h-[100px] flex items-center justify-center"
                         style={{ background: `linear-gradient(135deg, ${platformColor(s.platform || "")}20, ${platformColor(s.platform || "")}08)` }}>
-                        <span className="text-3xl opacity-60">{s.platform ? platformIcon(s.platform) : "\uD83C\uDFA5"}</span>
+                        {s.platform ? <PlatformIcon platform={s.platform} className="w-8 h-8 opacity-60" /> : <span className="text-3xl opacity-60">🎬</span>}
                       </div>
                     )}
                     {/* Play overlay */}

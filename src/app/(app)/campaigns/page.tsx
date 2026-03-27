@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { getCampaigns, enrichCampaigns, type EnrichedCampaign, type CampaignOverride } from "@/lib/api";
-import { platformIcon, platformColor, daysRemaining, cn } from "@/lib/utils";
+import { daysRemaining, cn } from "@/lib/utils";
+import { PlatformIcon, platformColor } from "@/components/PlatformIcons";
 
 export default function CampaignsPage() {
   const supabase = createClient();
@@ -78,7 +79,7 @@ export default function CampaignsPage() {
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="flex gap-2">
                         {c.allowed_platforms.map((p) => (
-                          <span key={p} className="text-3xl opacity-20">{platformIcon(p)}</span>
+                          <PlatformIcon key={p} platform={p} className="w-8 h-8 opacity-20" />
                         ))}
                       </div>
                     </div>
@@ -126,7 +127,7 @@ export default function CampaignsPage() {
                     {c.allowed_platforms.map((p) => (
                       <span key={p} className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                         style={{ background: `${platformColor(p)}15`, color: platformColor(p), border: `1px solid ${platformColor(p)}25` }}>
-                        {platformIcon(p)} {p}
+                        <PlatformIcon platform={p} className="w-3 h-3 inline-block" /> {p}
                       </span>
                     ))}
                   </div>

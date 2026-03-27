@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import { syncAllSubmissions, type LocalSubmission } from "@/lib/sync";
 import { getCampaigns, type Campaign, type CampaignOverride } from "@/lib/api";
-import { cn, relativeTime, extractThumbnail, platformIcon, platformColor, compactNumber } from "@/lib/utils";
+import { cn, relativeTime, extractThumbnail, compactNumber } from "@/lib/utils";
+import { PlatformIcon, platformColor } from "@/components/PlatformIcons";
 import { toast } from "sonner";
 
 type AdminTab = "creators" | "campaigns" | "submissions" | "campaign-settings";
@@ -58,6 +59,7 @@ export default function AdminPage() {
   const [editingCampaign, setEditingCampaign] = useState<string | null>(null);
   const [editBanner, setEditBanner] = useState("");
   const [editLogo, setEditLogo] = useState("");
+  const [editLinks, setEditLinks] = useState("");
   const [savingOverride, setSavingOverride] = useState(false);
 
   async function loadSubmissions() {
@@ -238,10 +240,12 @@ export default function AdminPage() {
   // ─── Campaign override: save ───
   const handleSaveOverride = async (campaignId: string) => {
     setSavingOverride(true);
+    const linksArr = editLinks.trim() ? editLinks.split("\n").map((l) => l.trim()).filter(Boolean) : null;
     const payload = {
       campaign_id: campaignId,
       banner_image_url: editBanner.trim() || null,
       logo_url: editLogo.trim() || null,
+      custom_links: linksArr,
       updated_at: new Date().toISOString(),
     };
     const { error } = await supabase.from("campaign_overrides").upsert(payload, { onConflict: "campaign_id" });
@@ -388,7 +392,7 @@ export default function AdminPage() {
                         ) : (
                           <div className="w-full h-full min-h-[110px] flex items-center justify-center"
                             style={{ background: `linear-gradient(135deg, ${platformColor(s.platform || "")}20, ${platformColor(s.platform || "")}08)` }}>
-                            <span className="text-3xl opacity-60">{s.platform ? platformIcon(s.platform) : "\uD83C\uDFA5"}</span>
+                            {s.platform ? <PlatformIcon platform={s.platform} className="w-8 h-8 opacity-60" /> : <span className="text-3xl opacity-60">🎬</span>}
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -733,7 +737,11 @@ export default function AdminPage() {
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold text-white font-display">{c.title}</div>
                         <div className="text-[10px] text-[#475569] mt-0.5">
-                          {c.allowed_platforms.map((p) => platformIcon(p) + " " + p).join(" \u00B7 ")}
+                          {c.allowed_platforms.map((p, i) => (
+                            <span key={p} className="inline-flex items-center gap-0.5">
+                              {i > 0 && " · "}<PlatformIcon platform={p} className="w-3 h-3 inline-block" /> {p}
+                            </span>
+                          ))}
                           {c.partner_rpm_usd != null && ` \u00B7 $${c.partner_rpm_usd.toFixed(2)}/1K`}
                         </div>
                       </div>
@@ -746,7 +754,7 @@ export default function AdminPage() {
                       )}
 
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {o?.banner_image_url || o?.logo_url ? (
+                        {o?.banner_image_url || o?.logo_url || o?.custom_links?.length ? (
                           <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                             Customized
                           </span>
@@ -761,6 +769,7 @@ export default function AdminPage() {
                             setEditingCampaign(c.id);
                             setEditBanner(o?.banner_image_url || "");
                             setEditLogo(o?.logo_url || "");
+                            setEditLinks(o?.custom_links?.join("\n") || "");
                           }}
                           className="px-3 py-1.5 bg-blu-500/10 border border-blu-500/20 text-blu-400 rounded-lg text-[11px] font-semibold hover:bg-blu-500/20 transition-all">
                           {isEditing ? "Cancel" : "Edit"}
@@ -794,6 +803,14 @@ export default function AdminPage() {
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                             </div>
                           )}
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#475569] mb-1">Custom Brief Links <span className="font-normal text-[#334155]">(overrides MediaMaxxing links)</span></label>
+                          <textarea value={editLinks} onChange={(e) => setEditLinks(e.target.value)}
+                            placeholder="One link per line&#10;https://docs.google.com/document/d/..."
+                            rows={3}
+                            className="w-full px-3 py-2 bg-[#0a0f1e] border border-[#1e293b] rounded-lg text-sm text-white placeholder:text-[#334155] outline-none focus:border-blu-500/40 resize-y" />
+                          <p className="text-[10px] text-[#334155] mt-1">Leave empty to use default MediaMaxxing links</p>
                         </div>
                         <button onClick={() => handleSaveOverride(c.id)} disabled={savingOverride}
                           className="px-5 py-2 bg-blu-500 text-white rounded-lg text-[13px] font-bold hover:bg-blu-600 transition-all disabled:opacity-40">

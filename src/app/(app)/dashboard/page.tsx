@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { getCampaigns, enrichCampaigns, type EnrichedCampaign, type CampaignOverride } from "@/lib/api";
 import { syncUserSubmissions, type LocalSubmission } from "@/lib/sync";
-import { platformIcon, platformColor } from "@/lib/utils";
+import { PlatformIcon, platformColor } from "@/components/PlatformIcons";
 
 export default function DashboardPage() {
   const supabase = createClient();
@@ -105,7 +105,7 @@ export default function DashboardPage() {
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="flex gap-2">
                       {c.allowed_platforms.map((p) => (
-                        <span key={p} className="text-2xl opacity-20">{platformIcon(p)}</span>
+                        <PlatformIcon key={p} platform={p} className="w-6 h-6 opacity-20" />
                       ))}
                     </div>
                   </div>
@@ -131,7 +131,7 @@ export default function DashboardPage() {
                   {c.allowed_platforms.map((p) => (
                     <span key={p} className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                       style={{ background: `${platformColor(p)}15`, color: platformColor(p), border: `1px solid ${platformColor(p)}25` }}>
-                      {platformIcon(p)} {p}
+                      <PlatformIcon platform={p} className="w-3 h-3 inline-block" /> {p}
                     </span>
                   ))}
                 </div>
