@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "BluStu Creator Portal",
   description: "Browse campaigns, submit content, and track your earnings.",
-  icons: { icon: "/logos/BLUSTUTALENTAGENCYPNG (2).png" },
+  icons: { icon: "/logos/blustu-icon.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
