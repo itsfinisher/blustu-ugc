@@ -9,8 +9,18 @@ import { cn, relativeTime, extractThumbnail, compactNumber } from "@/lib/utils";
 import { PlatformIcon, platformColor } from "@/components/PlatformIcons";
 import { toast } from "sonner";
 
-type AdminTab = "creators" | "campaigns" | "submissions" | "campaign-settings";
+type AdminTab = "creators" | "campaigns" | "submissions" | "campaign-settings" | "announcements";
 type SubFilter = "all" | "pending" | "approved" | "rejected";
+
+interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  category: string;
+  pinned: boolean;
+  author_id: string;
+  created_at: string;
+}
 
 interface Creator {
   id: string;
@@ -62,6 +72,24 @@ export default function AdminPage() {
   const [editLinks, setEditLinks] = useState("");
   const [savingOverride, setSavingOverride] = useState(false);
 
+  // Announcements state
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [annTitle, setAnnTitle] = useState("");
+  const [annBody, setAnnBody] = useState("");
+  const [annCategory, setAnnCategory] = useState("update");
+  const [annPinned, setAnnPinned] = useState(false);
+  const [annEditing, setAnnEditing] = useState<string | null>(null);
+  const [annSaving, setAnnSaving] = useState(false);
+  const [annDeleting, setAnnDeleting] = useState<string | null>(null);
+
+  async function loadAnnouncements() {
+    const { data } = await supabase
+      .from("announcements")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setAnnouncements((data as Announcement[]) || []);
+  }
+
   async function loadSubmissions() {
     const { data } = await supabase
       .from("submissions")
@@ -103,6 +131,8 @@ export default function AdminPage() {
       const oMap = new Map<string, CampaignOverride>();
       (overridesRes.data || []).forEach((o: CampaignOverride) => oMap.set(o.campaign_id, o));
       setOverrides(oMap);
+
+      await loadAnnouncements();
 
       setLoading(false);
 
@@ -317,6 +347,7 @@ export default function AdminPage() {
           { key: "creators" as AdminTab, label: `Creators (${creators.length})` },
           { key: "campaigns" as AdminTab, label: `Campaign Apps (${pendingMemberships.length})` },
           { key: "campaign-settings" as AdminTab, label: `Campaign Visuals (${mmCampaigns.length})` },
+          { key: "announcements" as AdminTab, label: `Announcements (${announcements.length})` },
         ].map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={cn(
@@ -821,6 +852,135 @@ export default function AdminPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      /* ════════════════════════════════════════════
+         ANNOUNCEMENTS TAB
+         ════════════════════════════════════════════ */
+      ) : tab === "announcements" ? (
+        <div className="space-y-6">
+          {/* Compose / Edit form */}
+          <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-5">
+            <h3 className="text-[13px] font-bold text-white mb-4 font-display">
+              {annEditing ? "Edit Announcement" : "New Announcement"}
+            </h3>
+            <div className="space-y-3">
+              <input type="text" value={annTitle} onChange={(e) => setAnnTitle(e.target.value)}
+                placeholder="Title" className="w-full px-3 py-2 bg-[#0a0f1e] border border-[#1e293b] rounded-lg text-sm text-white placeholder:text-[#334155] outline-none focus:border-blu-500/40" />
+              <textarea value={annBody} onChange={(e) => setAnnBody(e.target.value)}
+                placeholder="Write your announcement..."
+                rows={5}
+                className="w-full px-3 py-2 bg-[#0a0f1e] border border-[#1e293b] rounded-lg text-sm text-white placeholder:text-[#334155] outline-none focus:border-blu-500/40 resize-y" />
+              <div className="flex flex-wrap items-center gap-3">
+                <select value={annCategory} onChange={(e) => setAnnCategory(e.target.value)}
+                  className="px-3 py-2 bg-[#0a0f1e] border border-[#1e293b] rounded-lg text-sm text-white outline-none focus:border-blu-500/40">
+                  <option value="update">Update</option>
+                  <option value="news">News</option>
+                  <option value="creator-win">Creator Win</option>
+                  <option value="tip">Tip</option>
+                </select>
+                <label className="flex items-center gap-2 text-[12px] text-[#94a3b8] cursor-pointer select-none">
+                  <input type="checkbox" checked={annPinned} onChange={(e) => setAnnPinned(e.target.checked)}
+                    className="accent-blu-500 w-4 h-4" />
+                  Pin to top
+                </label>
+                <div className="flex gap-2 ml-auto">
+                  {annEditing && (
+                    <button onClick={() => { setAnnEditing(null); setAnnTitle(""); setAnnBody(""); setAnnCategory("update"); setAnnPinned(false); }}
+                      className="px-4 py-2 rounded-lg text-[13px] font-semibold text-[#94a3b8] bg-[#1e293b] hover:bg-[#334155] transition-all">
+                      Cancel
+                    </button>
+                  )}
+                  <button disabled={annSaving || !annTitle.trim() || !annBody.trim()}
+                    onClick={async () => {
+                      setAnnSaving(true);
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (annEditing) {
+                        const { error } = await supabase.from("announcements")
+                          .update({ title: annTitle.trim(), body: annBody.trim(), category: annCategory, pinned: annPinned, updated_at: new Date().toISOString() })
+                          .eq("id", annEditing);
+                        if (error) { toast.error(error.message); } else { toast.success("Announcement updated"); }
+                      } else {
+                        const { error } = await supabase.from("announcements")
+                          .insert({ title: annTitle.trim(), body: annBody.trim(), category: annCategory, pinned: annPinned, author_id: user?.id });
+                        if (error) { toast.error(error.message); } else { toast.success("Announcement posted"); }
+                      }
+                      setAnnTitle(""); setAnnBody(""); setAnnCategory("update"); setAnnPinned(false); setAnnEditing(null);
+                      await loadAnnouncements();
+                      setAnnSaving(false);
+                    }}
+                    className="px-5 py-2 bg-blu-500 text-white rounded-lg text-[13px] font-bold hover:bg-blu-600 transition-all disabled:opacity-40">
+                    {annSaving ? "Saving..." : annEditing ? "Update" : "Post"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Existing announcements */}
+          {announcements.length === 0 ? (
+            <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-12 text-center">
+              <div className="text-3xl mb-3 opacity-40">📢</div>
+              <p className="text-[#475569] text-sm">No announcements yet. Create your first one above.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {announcements.map((a) => (
+                <div key={a.id} className={cn(
+                  "bg-[#111827] border rounded-xl p-5",
+                  a.pinned ? "border-blu-500/30" : "border-[#1e293b]"
+                )}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {a.pinned && (
+                          <span className="text-[9px] font-bold text-blu-400 bg-blu-500/10 border border-blu-500/20 px-1.5 py-0.5 rounded-full uppercase">Pinned</span>
+                        )}
+                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase border",
+                          a.category === "creator-win" ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                          a.category === "news" ? "text-purple-400 bg-purple-500/10 border-purple-500/20" :
+                          a.category === "tip" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                          "text-blu-400 bg-blu-500/10 border-blu-500/20"
+                        )}>
+                          {a.category === "creator-win" ? "Creator Win" : a.category}
+                        </span>
+                        <span className="text-[10px] text-[#334155]">{relativeTime(a.created_at)}</span>
+                      </div>
+                      <h4 className="text-[14px] font-bold text-white font-display mb-1">{a.title}</h4>
+                      <p className="text-[12px] text-[#94a3b8] line-clamp-3 whitespace-pre-wrap">{a.body}</p>
+                    </div>
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <button onClick={() => { setAnnEditing(a.id); setAnnTitle(a.title); setAnnBody(a.body); setAnnCategory(a.category); setAnnPinned(a.pinned); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-blu-400 bg-blu-500/10 hover:bg-blu-500/20 transition-all">
+                        Edit
+                      </button>
+                      {annDeleting === a.id ? (
+                        <div className="flex gap-1">
+                          <button onClick={async () => {
+                            await supabase.from("announcements").delete().eq("id", a.id);
+                            setAnnDeleting(null);
+                            toast.success("Announcement deleted");
+                            await loadAnnouncements();
+                          }}
+                            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all">
+                            Confirm
+                          </button>
+                          <button onClick={() => setAnnDeleting(null)}
+                            className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#94a3b8] bg-[#1e293b] hover:bg-[#334155] transition-all">
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setAnnDeleting(a.id)}
+                          className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all">
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

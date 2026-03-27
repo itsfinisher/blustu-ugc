@@ -10,6 +10,7 @@ const navItems = [
   { href: "/campaigns", label: "Campaigns", icon: "campaigns" },
   { href: "/submissions", label: "Submissions", icon: "submissions" },
   { href: "/earnings", label: "Earnings", icon: "earnings" },
+  { href: "/announcements", label: "Announcements", icon: "announcements" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
@@ -123,6 +124,11 @@ function SidebarIcon({ name, active }: { name: string; active: boolean }) {
   if (name === "earnings") return (
     <svg className={cls} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24">
       <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+    </svg>
+  );
+  if (name === "announcements") return (
+    <svg className={cls} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
     </svg>
   );
   if (name === "settings") return (
