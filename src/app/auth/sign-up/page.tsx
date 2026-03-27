@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export default function SignUpPage() {
   const router = useRouter();
   const supabase = createClient();
+  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +23,7 @@ export default function SignUpPage() {
     e.preventDefault();
     setError("");
 
+    if (!fullName.trim()) { setError("Full name is required"); return; }
     if (!username.trim()) { setError("Username is required"); return; }
     if (username.includes(" ")) { setError("Username cannot contain spaces"); return; }
     if (password !== confirmPassword) { setError("Passwords do not match"); return; }
@@ -45,6 +47,7 @@ export default function SignUpPage() {
 
       const { error: profileError } = await supabase.from("profiles").insert({
         id: authData.user.id,
+        full_name: fullName.trim(),
         username: username.trim().toLowerCase(),
         status: "pending",
         role: "creator",
@@ -85,6 +88,11 @@ export default function SignUpPage() {
         )}
 
         <div className="space-y-4">
+          <div>
+            <label className="block text-[13px] font-semibold text-[#94a3b8] mb-1.5">Full Name</label>
+            <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your full name" required className={inputClass} />
+          </div>
           <div>
             <label className="block text-[13px] font-semibold text-[#94a3b8] mb-1.5">Username</label>
             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)}
